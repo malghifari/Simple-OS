@@ -27,8 +27,41 @@ void writeFile(char *buffer, char *filename, int *sectors);
 void executeProgram(char *filename, int segment, int *success);
 
 int main() {
-	int found;
+	int found, i;
 	char buffer[SECTOR_SIZE*MAX_SECTORS];
+	//buat logo OS
+	//baris 1
+	for(i=60; i<69; i++){
+		putInMemory(0xB000, 0x8000 + (80*2+i)*2, '=');
+		putInMemory(0xB000, 0x8001 + (80*2+i)*2, 0xA);
+		putInMemory(0xB000, 0x8000 + (80*8+i)*2, '=');
+		putInMemory(0xB000, 0x8001 + (80*8+i)*2, 0xA);
+		if(i != 4+60){
+			putInMemory(0xB000, 0x8000 + (80*3+i)*2, '#');
+			putInMemory(0xB000, 0x8001 + (80*3+i)*2, 0xD);
+			putInMemory(0xB000, 0x8000 + (80*7+i)*2, '#');
+			putInMemory(0xB000, 0x8001 + (80*7+i)*2, 0xD);
+		}
+		if(i == 0+60 || i == 3+60 || i == 5+60){
+			putInMemory(0xB000, 0x8000 + (80*4+i)*2, '#');
+			putInMemory(0xB000, 0x8001 + (80*4+i)*2, 0xD);
+			putInMemory(0xB000, 0x8000 + (80*5+i)*2, '#');
+			putInMemory(0xB000, 0x8001 + (80*5+i)*2, 0xD);
+		}
+		if(i >= 6+60 && i <= 8+60){
+			putInMemory(0xB000, 0x8000 + (80*5+i)*2, '#');
+			putInMemory(0xB000, 0x8001 + (80*5+i)*2, 0xD);
+		}
+		if(i==0+60 || i==3+60 || i==8+60){
+			putInMemory(0xB000, 0x8000 + (80*6+i)*2, '#');
+			putInMemory(0xB000, 0x8001 + (80*6+i)*2, 0xD);
+		}
+
+	}
+	printString("Press any key to continue...\n\r");
+	interrupt(0x16, 0, 0, 0, 0);
+
+
 	makeInterrupt21();
 	interrupt(0x21, 0x4, buffer, "key.txt", &found);
 	if(found == TRUE){
@@ -38,6 +71,22 @@ int main() {
 		interrupt(0x21, 0x6, "keyproc", 0x2000, &found);
 	}
 	while (1);
+
+	// putInMemory(0xB000, 0x8000, 'K');
+	// putInMemory(0xB000, 0x8001, 0xD);
+	// putInMemory(0xB000, 0x8002, 'e');
+	// putInMemory(0xB000, 0x8003, 0xD);
+	// putInMemory(0xB000, 0x8004, 'r');
+	// putInMemory(0xB000, 0x8005, 0xD);
+	// putInMemory(0xB000, 0x8006, 'n');
+	// putInMemory(0xB000, 0x8007, 0xD);
+	// putInMemory(0xB000, 0x8008, 'e');
+	// putInMemory(0xB000, 0x8009, 0xD);
+	// putInMemory(0xB000, 0x800A, 'l');
+	// putInMemory(0xB000, 0x800B, 0xD);
+	// putInMemory(0xB000, 0x800C, '!');
+	// putInMemory(0xB000, 0x800D, 0xD);
+	// while (1);
 }
 void handleInterrupt21 (int AX, int BX, int CX, int DX){
 	switch (AX) {
@@ -80,7 +129,7 @@ void readString(char* string){ //tested work
 	int cursor = 0;
 	while(c != '\r'){
 		if(c == '\b'){
-			// interrupt(0x10, 0xE00 + '\b', 0, 0, 0);
+			interrupt(0x10, 0xE00 + '\b', 0, 0, 0);
 			interrupt(0x10, 0xE00 + '\0', 0, 0, 0);
 			interrupt(0x10, 0xE00 + '\b', 0, 0, 0);
 			if(cursor > 0){
