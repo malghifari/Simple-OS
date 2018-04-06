@@ -2,10 +2,13 @@
 #define SECTOR_SIZE 512
 #define MAX_FILES 16
 #define MAX_FILENAME 12
-#define MAX_SECTORS 20
+// #define MAX_SECTORS 20
 #define DIR_ENTRY_LENGTH 32
-#define MAP_SECTOR 1
-#define DIR_SECTOR 2
+#define MAP_SECTOR 0x100
+#define DIRS_SECTOR 0x101
+#define FILES_SECTOR 0x102
+#define SECTORS_SECTOR 0x103
+
 #define TRUE 1
 #define FALSE 0
 #define INSUFFICIENT_SECTORS 0
@@ -58,63 +61,77 @@ int main() {
 		}
 
 	}
-	printString("Press any key to continue...\n\r");
-	interrupt(0x16, 0, 0, 0, 0);
+	// printString("Press any key to continue...\n\r");
+	// interrupt(0x16, 0, 0, 0, 0);
 
 
-	makeInterrupt21();
-	interrupt(0x21, 0x4, buffer, "key.txt", &found);
-	if(found == TRUE){
-		interrupt(0x21, 0x0, buffer, 0, 0);
-	}
-	else{
-		interrupt(0x21, 0x6, "keyproc", 0x2000, &found);
-	}
-	while (1);
-
-	// putInMemory(0xB000, 0x8000, 'K');
-	// putInMemory(0xB000, 0x8001, 0xD);
-	// putInMemory(0xB000, 0x8002, 'e');
-	// putInMemory(0xB000, 0x8003, 0xD);
-	// putInMemory(0xB000, 0x8004, 'r');
-	// putInMemory(0xB000, 0x8005, 0xD);
-	// putInMemory(0xB000, 0x8006, 'n');
-	// putInMemory(0xB000, 0x8007, 0xD);
-	// putInMemory(0xB000, 0x8008, 'e');
-	// putInMemory(0xB000, 0x8009, 0xD);
-	// putInMemory(0xB000, 0x800A, 'l');
-	// putInMemory(0xB000, 0x800B, 0xD);
-	// putInMemory(0xB000, 0x800C, '!');
-	// putInMemory(0xB000, 0x800D, 0xD);
+	// makeInterrupt21();
+	// interrupt(0x21, 0x4, buffer, "key.txt", &found);
+	// if(found == TRUE){
+	// 	interrupt(0x21, 0x0, buffer, 0, 0);
+	// }
+	// else{
+	// 	interrupt(0x21, 0x6, "keyproc", 0x2000, &found);
+	// }
 	// while (1);
+
 }
+
 void handleInterrupt21 (int AX, int BX, int CX, int DX){
-	switch (AX) {
-		case 0x0:
+	char AL, AH;
+	AL = (char) AX;
+	AH = (char) (AX>>8);
+	switch (AL) {
+		case 0x00:
 			printString(BX);
 			break;
-		case 0x1:
+		case 0x01:
 			readString(BX);
 			break;
-		case 0x2:
+		case 0x02:
 			readSector(BX, CX);
 			break;
-		case 0x3:
+		case 0x03:
 			writeSector(BX, CX);
 			break;
-		case 0x4:
-			readFile(BX, CX, DX);
+		case 0x04:
+			readFile(BX, CX, DX, AH);
 			break;
-		case 0x5:
-			writeFile(BX, CX, DX);
+		case 0x05:
+			writeFile(BX, CX, DX, AH);
 			break;
-		case 0x6:
-			executeProgram(BX, CX, DX);
+		case 0x06:
+			executeProgram(BX, CX, DX, AH);
+			break;
+		case 0x07:
+			terminateProgram(BX);
+			break;
+		case 0x08:
+			makeDirectory(BX, CX, AH);
+			break;
+		case 0x09:
+			deleteFile(BX, CX, AH);
+			break;
+		case 0x0A:
+			deleteDirectory(BX, CX, AH);
+			break;
+		case 0x20:
+			putArgs(BX, CX);
+			break;
+		case 0x21:
+			getCurdir(BX);
+			break;
+		case 0x22:
+			getArgc(BX);
+			break;
+		case 0X23:
+			getArgv(BX, CX);
 			break;
 		default:
 			printString("Invalid interrupt");
 	}
 }
+
 
 void printString(char* string){ //tested work
 	int i = 0;
@@ -234,43 +251,83 @@ void writeFile(char *buffer, char *filename, int *sectors){
 	writeSector(dir, DIR_SECTOR);
 }
 
-void readFile(char* buffer, char* filename, int *success){
-	char dir[SECTOR_SIZE];
-	int found = FALSE;
-	int bener;
-	int idx, i, j;
-	readSector(dir, DIR_SECTOR);
-	
-	for(i=0; i<SECTOR_SIZE; i+=DIR_ENTRY_LENGTH){
-		bener = TRUE;
-		for(j=i; j<MAX_FILENAME+i; j++){
-			if(dir[j] != filename[j-i]){
-				bener = FALSE;
-			}
-			if(filename[j-i] == 0){
-				break;
-			}
+// void splitString(char** result, char* str, char splitter){
+// 	int istr = 0;
+// 	int ires1 = 0;
+// 	int ires2 = 0;
+
+// 	while(str[istr] != '\0'){
+// 		if(str[istr] == '/' && istr == 0){
+// 			istr++;
+// 		}
+// 		else if (str[istr] == '/'){
+// 			result[ires1][ires2] = '\0';
+// 			istr++;
+// 			ires1++;
+// 		}
+// 		else{
+// 			result[ires1][ires2] = str[istr]
+// 			istr++;
+// 			ires2++;
+// 		}
+// 	}
+// }
+
+void readFile(char* buffer, char* path, int *result, char parentIndex){
+	char dirs[SECTOR_SIZE];
+	char files[SECTOR_SIZE];
+	char splitted_path[15];
+	int path_idx = 0;
+	int splitted_path_idx = 0;
+	// int found = FALSE;
+	// int bener;
+	// int idx, i, j;
+	readSector(dirs, DIRS_SECTOR);
+	readSector(files, FILES_SECTOR);
+	while(path[pathidx] != '\0'){
+		if(path[pathidx] == '/' && pathidx == 0){
+			pathidx++
 		}
-		if(bener == TRUE){
-			found = TRUE;
-			idx = i;
-			break;
+		else if(path[pathidx] == '/'){
+			
 		}
+		else{
+			splitted_path[splitted_path_idx] = path[path_idx];
+			splitted_path_idx++;
+			path_idx++;
+		} 
 	}
-	if(found == FALSE){
-		*success = FALSE;
-		return;
-	}
-	else if(found == TRUE){
-		for(i=0; i< MAX_SECTORS; i++){
-			if(dir[idx+i+MAX_FILENAME] == 0){
-				*success = TRUE;
-				return;
-			}
-			readSector(buffer + i*SECTOR_SIZE, dir[idx+i+MAX_FILENAME]);
-		}
-		*success = TRUE;
-	}
+
+	// for(i=0; i<SECTOR_SIZE; i+=DIR_ENTRY_LENGTH){
+	// 	bener = TRUE;
+	// 	for(j=i; j<MAX_FILENAME+i; j++){
+	// 		if(dir[j] != filename[j-i]){
+	// 			bener = FALSE;
+	// 		}
+	// 		if(filename[j-i] == 0){
+	// 			break;
+	// 		}
+	// 	}
+	// 	if(bener == TRUE){
+	// 		found = TRUE;
+	// 		idx = i;
+	// 		break;
+	// 	}
+	// }
+	// if(found == FALSE){
+	// 	*success = FALSE;
+	// 	return;
+	// }
+	// else if(found == TRUE){
+	// 	for(i=0; i< MAX_SECTORS; i++){
+	// 		if(dir[idx+i+MAX_FILENAME] == 0){
+	// 			*success = TRUE;
+	// 			return;
+	// 		}
+	// 		readSector(buffer + i*SECTOR_SIZE, dir[idx+i+MAX_FILENAME]);
+	// 	}
+	// 	*success = TRUE;
+	// }
 
 }
 
