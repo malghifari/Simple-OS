@@ -128,6 +128,8 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX){
 		case 0X23:
 			getArgv(BX, CX);
 			break;
+		case 0x24:
+			getIndexFromPath(BX, CX);
 		default:
 			printString("Invalid interrupt");
 	}
@@ -390,4 +392,10 @@ void terminateProgram (int *result) {
 }
 
 
+void getIndexFromPath(char* path, char* idx){
+    char currIdx;
+    char* dirName;
+	char dirs[SECTOR_SIZE];
+    while
+}
 
