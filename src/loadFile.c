@@ -51,7 +51,7 @@ void copySector (FILE *src, int srcSector, FILE *dest, int destSector) {
 
 void writeName (char *entries, int index, char *name) {
   int i;
-  for (i = 0; i < MAX_NAME; ++i) {
+  for (i = 0; name[i] != '\0'; ++i) {
     entries[index * ENTRY_LENGTH + NAME_OFFSET + i] = name[i];
   }
   for (; i < MAX_NAME; ++i) {
@@ -122,8 +122,9 @@ int main (int argc, char* argv[]) {
       if (sector != NOT_FOUND) {
         copySector(loadFile, sectorCount, floppy, sector);
         printf("Loaded %s to sector %d\n", argv[1], sector);
-        ++sectorCount;
         map[sector] = 0xFF;
+        sectors[index * ENTRY_LENGTH + sectorCount] = sector;
+        ++sectorCount;
       }
       else {
         printf("Cannot load more files: sectors full\n");
@@ -132,6 +133,9 @@ int main (int argc, char* argv[]) {
     }
     files[index * ENTRY_LENGTH] = 0xFF;
     writeName(files, index, argv[1]);
+    writeSector(map, floppy, MAP_SECTOR);
+    writeSector(files, floppy, FILES_SECTOR);
+    writeSector(sectors, floppy, SECTORS_SECTOR);
   }
   else {
     printf("Cannot load more files: reached max files\n");

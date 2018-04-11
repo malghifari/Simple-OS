@@ -1,13 +1,13 @@
 char currentDir = 0xFF;
-char currentState[1000];
-currentState = "$/";
+// char currentState[1000];
+char* currentState = "$/";
 
 int main(){
-    char command[1000];
+    // char command[1000];
     while(1){
         interrupt(0x21, 0x00, currentState, 0, 0);
-        interrupt(0x21, 0x01, command, 0, 0);
-        handleCommand(command);
+        // interrupt(0x21, 0x01, command, 0, 0);
+        // handleCommand(command);
     }
     return 0;
 }
