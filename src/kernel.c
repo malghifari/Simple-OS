@@ -1,21 +1,28 @@
 #define MAX_BYTE 256
 #define SECTOR_SIZE 512
+#define MAX_SECTORS 16
 #define MAX_FILES 16
-#define MAX_FILENAME 12
-#define MAX_SECTORS 20
-#define DIR_ENTRY_LENGTH 32
+#define MAX_FILENAME 15
+#define MAX_DIRNAME 15
 #define MAP_SECTOR 0x100
 #define DIRS_SECTOR 0x101
 #define FILES_SECTOR 0x102
 #define SECTORS_SECTOR 0x103
-
+#define DIRS_ENTRY_LENGTH 16
+#define FILES_ENTRY_LENGTH 16
+#define SECTORS_ENTRY_LENGTH 16
 #define TRUE 1
 #define FALSE 0
 #define INSUFFICIENT_SECTORS 0
+#define INSUFFICIENT_ENTRIES -3
 #define NOT_FOUND -1
+#define ALREADY_EXISTS -2
 #define INSUFFICIENT_DIR_ENTRIES -1
 #define EMPTY 0x00
 #define USED 0xFF
+#define ARGS_SECTOR 512
+
+
 
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 void printString(char *string);
@@ -24,11 +31,11 @@ int mod(int a, int b);
 int div(int a, int b);
 void readSector(char *buffer, int sector);
 void writeSector(char *buffer, int sector);
-void readFile(char* buffer, char* path, int *result, char parentIndex);
+void readFile(char *buffer, char *filename, int *success);
 void clear(char *buffer, int length);
-void writeFile(char *buffer, char *filename, int *sectors);
-void executeProgram(char *path, int segment, int *result, char parentIndex);
-void terminateProgram(int *result)
+void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
+void executeProgram(char *filename, int segment, int *success);
+void printStringAt(int y, int x, char* s);
 
 int main() {
 	int success, i;
@@ -195,62 +202,7 @@ void clear(char *buffer, int length){
 	}
 }
 
-void writeFile(char *buffer, char *filename, int *sectors){
-	char map[SECTOR_SIZE];
-	char dir[SECTOR_SIZE];
-	char sectorBuffer[SECTOR_SIZE];
-	int dirIndex;
-	readSector(map, MAP_SECTOR);
-	readSector(dir, DIR_SECTOR);
 
-	for (dirIndex = 0; dirIndex < MAX_FILES; ++dirIndex) {
-		if (dir[dirIndex * DIR_ENTRY_LENGTH] == '\0') {
-		break;
-		}
-	}
-	if (dirIndex < MAX_FILES) {
-		int i, j, sectorCount;
-		for (i = 0, sectorCount = 0; i < MAX_BYTE && sectorCount < *sectors; ++i) {
-			if (map[i] == EMPTY) {
-				++sectorCount;
-			}
-		}
-		if (sectorCount < *sectors) {
-			*sectors = INSUFFICIENT_SECTORS;
-			return;
-		}
-		else {
-			clear(dir + dirIndex * DIR_ENTRY_LENGTH, DIR_ENTRY_LENGTH);
-			for (i = 0; i < MAX_FILENAME; ++i) {
-				if (filename[i] != '\0') {
-					dir[dirIndex * DIR_ENTRY_LENGTH + i] = filename[i];
-				}
-				else {
-					break;
-				}
-			}
-			for (i = 0, sectorCount = 0; i < MAX_BYTE && sectorCount < *sectors; ++i) {
-				if (map[i] == EMPTY) {
-					map[i] = USED;
-					dir[dirIndex * DIR_ENTRY_LENGTH + MAX_FILENAME +
-					sectorCount] = i;
-					clear(sectorBuffer, SECTOR_SIZE);
-					for (j = 0; j < SECTOR_SIZE; ++j) {
-						sectorBuffer[j] = buffer[sectorCount * SECTOR_SIZE + j];
-					}
-					writeSector(sectorBuffer, i);
-					++sectorCount;
-				}
-			}
-		}
-	}
-	else {
-		*sectors = INSUFFICIENT_DIR_ENTRIES;
-		return;
-	}
-	writeSector(map, MAP_SECTOR);
-	writeSector(dir, DIR_SECTOR);
-}
 
 // void splitString(char** result, char* str, char splitter){
 // 	int istr = 0;
@@ -274,95 +226,287 @@ void writeFile(char *buffer, char *filename, int *sectors){
 // 	}
 // }
 
-void readFile(char* buffer, char* path, int *result, char parentIndex){
+// void readFile(char* buffer, char* path, int *result, char parentIndex){
+// 	char dirs[SECTOR_SIZE];
+// 	char files[SECTOR_SIZE];
+// 	char sectors[SECTOR_SIZE];
+// 	char splitted_path[15];
+// 	int path_idx = 0;
+// 	int splitted_path_idx = 0;
+// 	int i, j, found;
+// 	// int found = FALSE;
+// 	// int bener;
+// 	// int idx, i, j;
+// 	readSector(dirs, DIRS_SECTOR);
+// 	readSector(files, FILES_SECTOR);
+// 	readSector(sectors, SECTORS_SECTOR);
+// 	while(TRUE){
+// 		if(path[path_idx] == '/' && path_idx == 0){
+// 			path_idx++;
+// 		}
+// 		// when splitted_path is a directory
+// 		else if(path[path_idx] == '/'){
+// 			splitted_path[splitted_path_idx] = '\0';
+// 			splitted_path_idx = 0;
+// 			for(i=0; i<SECTOR_SIZE; i+=16){
+// 				found = TRUE;
+// 				if(dirs[i] == parentIndex){
+// 					j = 0;
+// 					while(splitted_path[j] != '\0' && found){
+// 						if(splitted_path[j] != dirs[j+i+1]){
+// 							found = FALSE;
+// 						}
+// 						else{
+// 							j++;
+// 						}
+// 					}
+// 				}
+// 				else{
+// 					found = FALSE;
+// 				}
+// 				if(found == TRUE){
+// 					parentIndex = dirs[i];
+// 					break;
+// 				}
+// 			}
+// 			if(found == FALSE){
+// 				*result = -1;
+// 				return;
+// 			}
+// 		}
+
+// 		//when splitted_path is a files
+// 		else if(path[path_idx] == '\0'){
+// 			splitted_path[splitted_path_idx] = '\0';
+// 			splitted_path_idx = 0;
+// 			for(i=0; i<SECTOR_SIZE; i+=16){
+// 				found = TRUE;
+// 				if(files[i] == parentIndex){
+// 					j = 0;
+// 					while(splitted_path[j] != '\0' && found){
+// 						if(splitted_path[j] != files[j+i+1]){
+// 							found = FALSE;
+// 						}
+// 						else{
+// 							j++;
+// 						}
+// 					}
+// 				}
+// 				else{
+// 					found = FALSE;
+// 				}
+// 				if(found == TRUE){
+// 					for(j=0; j<16; j++){
+// 						readSector(buffer + j*SECTOR_SIZE, sectors[j]);
+// 					}
+// 					*result = 0;
+// 					return;
+// 				}
+// 			}
+// 			if(found == FALSE){
+// 				*result = -1;
+// 				return;
+// 			}
+// 		}
+// 		else{
+// 			splitted_path[splitted_path_idx] = path[path_idx];
+// 			splitted_path_idx++;
+// 			path_idx++;
+// 		} 
+// 	}
+// }
+
+void readFile(char *buffer, char *path, int *result, char parentIndex) {
+	// Search directory path on dirs sector
 	char dirs[SECTOR_SIZE];
 	char files[SECTOR_SIZE];
-	char sectors[SECTOR_SIZE];
-	char splitted_path[15];
-	int path_idx = 0;
-	int splitted_path_idx = 0;
-	int i, j, found;
-	// int found = FALSE;
-	// int bener;
-	// int idx, i, j;
 	readSector(dirs, DIRS_SECTOR);
 	readSector(files, FILES_SECTOR);
-	readSector(sectors, SECTORS_SECTOR);
-	while(TRUE){
-		if(path[path_idx] == '/' && path_idx == 0){
-			path_idx++;
-		}
-		// when splitted_path is a directory
-		else if(path[path_idx] == '/'){
-			splitted_path[splitted_path_idx] = '\0';
-			splitted_path_idx = 0;
-			for(i=0; i<SECTOR_SIZE; i+=16){
-				found = TRUE;
-				if(dirs[i] == parentIndex){
-					j = 0;
-					while(splitted_path[j] != '\0' && found){
-						if(splitted_path[j] != dirs[j+i+1]){
-							found = FALSE;
-						}
-						else{
-							j++;
-						}
-					}
-				}
-				else{
-					found = FALSE;
-				}
-				if(found == TRUE){
-					parentIndex = dirs[i];
-					break;
-				}
-			}
-			if(found == FALSE){
-				*result = -1;
-				return;
-			}
+	int i = 0;
+	int done = FALSE;
+	int fileIndex;
+	char dirParent = parentIndex;
+	char dirName[MAX_DIRNAME];
+	int dirNameLength = 0;
+	while (!done) {
+		// Read current path
+		int j = 0;
+		while (path[i] != '/' && path[i] != '\0') {
+			dirName[j] = path[i];
+			dirNameLength++;
+			i++;
 		}
 
-		//when splitted_path is a files
-		else if(path[path_idx] == '\0'){
-			splitted_path[splitted_path_idx] = '\0';
-			splitted_path_idx = 0;
-			for(i=0; i<SECTOR_SIZE; i+=16){
-				found = TRUE;
-				if(files[i] == parentIndex){
-					j = 0;
-					while(splitted_path[j] != '\0' && found){
-						if(splitted_path[j] != files[j+i+1]){
-							found = FALSE;
-						}
-						else{
-							j++;
+		// Determine whether current path is a directory or filename
+		if (path[i] == '/') {
+			// Search dirs for current path
+			dirFound = FALSE;
+			for (int j = 0; j < SECTOR_SIZE / DIRS_ENTRY_LENGTH; j++) {
+				if (dirs[j * DIRS_ENTRY_LENGTH] == parentIndex) {
+					int dirNameFound = TRUE;
+					for (int k = 0; k < dirNameLength; k++) {
+						if (dirs[j * DIRS_ENTRY_LENGTH + k + 1] != dirName[k]) {
+							dirNameFound = FALSE;
+							break;
 						}
 					}
-				}
-				else{
-					found = FALSE;
-				}
-				if(found == TRUE){
-					for(j=0; j<16; j++){
-						readSector(buffer + j*SECTOR_SIZE, sectors[j]);
+					if (dirNameFound) {
+						dirFound = TRUE;
+						dirParent = j;
+						dirNameLength = 0;
+						break;
 					}
-					*result = 0;
-					return;
 				}
 			}
-			if(found == FALSE){
-				*result = -1;
+			if (!dirFound) {
+				*result = NOT_FOUND;
 				return;
 			}
+		} else {
+			// Search files fot current path
+			fileFound = FALSE;
+			for (int j = 0; j < SECTOR_SIZE / FILES_ENTRY_LENGTH; j++) {
+				if (files[j * DIRS_ENTRY_LENGTH] == parentIndex) {
+					int fileNameFound = TRUE;
+					for (int k = 0; k < dirNameLength; k++) {
+						if (files[j * FILES_ENTRY_LENGTH + k + 1] != dirName[k]) {
+							fileNameFound = FALSE;
+							break;
+						}
+					}
+					if (fileNameFound) {
+						fileIndex = j;
+						fileFound = TRUE;
+						break;
+					}
+				}
+			}
+			if (!fileFound) {
+				*result = NOT_FOUND;
+				return;
+			} else {
+				*result = 0;
+				done = TRUE;
+			}
 		}
-		else{
-			splitted_path[splitted_path_idx] = path[path_idx];
-			splitted_path_idx++;
-			path_idx++;
-		} 
+	}
+
+	// If file found
+	char sectors[SECTOR_SIZE];
+	readSector(sectors, FILES_SECTOR);
+	for (i = 0; i < SECTORS_ENTRY_LENGTH; i++) {
+		buffer[fileIndex * SECTORS_ENTRY_LENGTH + i] = sectors[i];
 	}
 }
+// void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
+// 	char map[SECTOR_SIZE];
+// 	char dirs[SECTOR_SIZE];
+// 	char files[SECTOR_SIZE];
+// 	char sectorBuffer[SECTOR_SIZE];
+// 	int filesIndex;
+
+// 	readSector(map, MAP_SECTOR);
+// 	readSector(dirs, DIRS_SECTOR);
+// 	readSector(files, FILES_SECTOR);
+
+// 	// Check whether map has enough empty sectors
+// 	int i, j, sectorCount;
+// 	for (i = 0, sectorCount = 0; i < MAX_BYTE && sectorCount < *sectors; ++i) {
+// 		if (map[i] == EMPTY) {
+// 			++sectorCount;
+// 		}
+// 	}
+// 	if (sectorCount < *sectors) {
+// 		*sectors = INSUFFICIENT_SECTORS;
+// 		return;
+// 	} else {
+// 		// Check whether files sector has an empty entry
+// 		for (filesIndex = 0; filesIndex < MAX_FILES; ++filesIndex) {
+// 			if (files[filesIndex * FILES_ENTRY_LENGTH] == '\0') {
+// 				break;
+// 			}
+// 		}
+
+// 		if (filesIndex < MAX_FILES) {
+// 			// Check for dirs sector
+// 			int i = 0;
+// 			int done = FALSE;
+// 			int fileIndex;
+// 			int dirFound;
+// 			int fileFound;
+// 			char dirParent = parentIndex;
+// 			char dirName[MAX_DIRNAME];
+// 			int dirNameLength = 0;
+// 			while (!done) {
+// 				// Read current path
+// 				int j = 0;
+// 				while (path[i] != '/' && path[i] != '\0') {
+// 					dirName[j] = path[i];
+// 					dirNameLength++;
+// 					i++;
+// 				}
+
+// 				// Determine whether current path is a directory or filename
+// 				if (path[i] == '/') {
+// 					// Search dirs for current path
+// 					dirFound = FALSE;
+// 					for (int j = 0; j < SECTOR_SIZE; j+=DIRS_ENTRY_LENGTH) {
+// 						if (dirs[j] == parentIndex) {
+// 							int dirNameFound = TRUE;
+// 							for (int k = 0; k < dirNameLength; k++) {
+// 								if (dirs[j + k + 1] != dirName[k]) {
+// 									dirNameFound = FALSE;
+// 									break;
+// 								}
+// 							}
+// 							if (dirNameFound) {
+// 								dirFound = TRUE;
+// 								dirParent = j;
+// 								dirNameLength = 0;
+// 								break;
+// 							}
+// 						}
+// 					}
+// 					if (!dirFound) {
+// 						*sectors = NOT_FOUND;
+// 						return;
+// 					}
+// 				} else {
+// 					// Search files whether filename exist for current path
+// 					for (int j = 0; j < SECTOR_SIZE; j+=FILES_ENTRY_LENGTH) {
+// 						if (files[j] == parentIndex) {
+// 							int fileNameFound = FALSE;
+// 							for (int k = 0; k < dirNameLength; k++) {
+// 								if (files[j + k + 1] == dirName[k]) {
+// 									fileNameFound = TRUE;
+// 									break;
+// 								}
+// 							}
+// 							if (fileNameFound) {
+// 								*sectors = ALREADY_EXISTS;
+// 								return;
+// 							}
+// 						}
+// 					}
+// 					done = TRUE;
+// 				}
+// 			}
+
+// 			// If filename doesn't exist for current path, write to sectors
+			
+// 				// Find the first empty entry in files sector
+
+// 				// Write data from buffer to the sector found before
+
+// 		} else {
+// 			*sectors = INSUFFICIENT_ENTRIES;
+// 			return;
+// 		}
+// 	}
+// 	writeSector(map, MAP_SECTOR);
+// 	writeSector(dirs, DIRS_SECTOR);
+// 	writeSector(files, FILES_SECTOR);
+// }
 
 void executeProgram(char *path, int segment, int *result, char parentIndex){ //not tested but probably work
 	char buffer[MAX_SECTORS*SECTOR_SIZE];
