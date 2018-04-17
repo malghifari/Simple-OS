@@ -78,7 +78,7 @@ int main() {
 		}
 
 	}
-	// printString("Press any key to continue...\n\r");
+	printString("Press any key to continue...\n\r");
 	// interrupt(0x16, 0, 0, 0, 0);
 
 

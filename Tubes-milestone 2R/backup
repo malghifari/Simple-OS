@@ -1,0 +1,309 @@
+
+void deleteFileByIndex(char index, int *success)
+{
+    char file[SECTOR_SIZE];
+    char map[SECTOR_SIZE];
+    char sector[SECTOR_SIZE];
+    int i, j;
+
+    readSector(file, FILE_SECTOR);
+
+    if (file[index * DIR_ENTRY_LENGTH + 1] == 0)
+    {
+        *success = 0;
+        return;
+    }
+
+    readSector(map, MAP_SECTOR);
+    readSector(sector, SECTOR_SECTOR);
+
+    // delete file
+    // ubah byte pertama nama file
+    file[index * DIR_ENTRY_LENGTH + 1] = 0;
+
+    // mengosongkan sector
+    for (i = 0; i < 16; i++)
+    {
+        if (sector[index * DIR_ENTRY_LENGTH + i] == 0)
+            break;
+        map[sector[index * DIR_ENTRY_LENGTH + i]] = EMPTY;
+    }
+    writeSector(file, FILE_SECTOR);
+    writeSector(map, MAP_SECTOR);
+
+    *success = 0;
+}
+
+void deleteFile(char *path, int *result, char parentIndex)
+{
+    char file[SECTOR_SIZE];
+    char map[SECTOR_SIZE];
+    char sector[SECTOR_SIZE];
+    char same;
+    char exist = FALSE;
+    char nama[MAX_FILENAME];
+    int f_idx, i, fname_len, count;
+    int s = -1;
+    char res;
+    int found = FALSE;
+
+    printString("deletefile ");
+    printString(path);
+    printChar(' ');
+    printCharval(parentIndex);
+    printString("\r\n");
+
+    // hitung panjang filename
+    i = 0;
+    fname_len = 0;
+    while (path[i] != 0)
+    {
+        i++;
+        fname_len++;
+    }
+    // jika fname_len == 0, berarti masukan string kosong
+    if (fname_len == 0)
+    {
+        printString("String kosong");
+        *result = -1;
+        return;
+    }
+
+    // cari karakter / pertama
+    i = 0;
+    while ((path[i] != 0) && (path[i] != '/'))
+    {
+        nama[i] = path[i];
+        i++;
+    }
+    nama[i] = 0;
+
+    if (path[i] == '/')
+    {
+        // mencari directory, lalu cari anak rekursif
+        printString("dir: ");
+        printString(nama);
+        printString("\r\n");
+
+        // cari name di dalam dirsector
+        findDirectory(nama, &res, parentIndex, &s);
+        if (s == -1)
+        {
+            printString("Cant find directory\r\n");
+            *result = -1;
+            return;
+        }
+
+        deleteFile(path + i + 1, result, res);
+    }
+    else
+    {
+        // mencari file name
+        printString("file: ");
+        printString(nama);
+        printString("\r\n");
+
+        // cek apakah tidak ada file
+        findFile(nama, &res, parentIndex, &s);
+        if (s == -1)
+        {
+            printString("File doesn't exist.");
+            *result = -1;
+            return;
+        }
+
+        deleteFileByIndex(res, result);
+    }
+}
+
+void deleteDirectory(char *path, int *result, char parentIndex)
+{
+    char file[SECTOR_SIZE];
+    char map[SECTOR_SIZE];
+    char sector[SECTOR_SIZE];
+    char dir[SECTOR_SIZE];
+    char same, curdir;
+    char exist = FALSE;
+    char nama[MAX_FILENAME];
+    int dir_idx, i, j, fname_len, count;
+    int s = -1;
+    char res;
+    int found = FALSE;
+
+    printString("deletedirectory ");
+    printString(path);
+    printChar(' ');
+    printCharval(parentIndex);
+    printString("\r\n");
+
+    // hitung panjang filename
+    i = 0;
+    fname_len = 0;
+    while (path[i] != 0)
+    {
+        i++;
+        fname_len++;
+    }
+
+    // jika fname_len == 0, berarti masukan string kosong
+    if (fname_len == 0)
+    {
+        printString("String kosong");
+        *result = -1;
+        return;
+    }
+
+    // cari karakter / pertama
+    i = 0;
+    while ((path[i] != 0) && (path[i] != '/'))
+    {
+        nama[i] = path[i];
+        i++;
+    }
+    nama[i] = 0;
+
+    if (path[i] == '/')
+    {
+        // mencari directory, lalu cari anak rekursif
+        printString("dir: ");
+        printString(nama);
+        printString("\r\n");
+
+        // cari name di dalam dirsector
+        findDirectory(nama, &res, parentIndex, &s);
+        if (s == -1)
+        {
+            printString("Cant find directory\r\n");
+            *result = -1;
+            return;
+        }
+
+        deleteDirectory(path + i + 1, result, res);
+    }
+    else
+    {
+        // mencari file name
+        printString("file: ");
+        printString(nama);
+        printString("\r\n");
+
+        // cek apakah tidak ada directory
+        findFile(nama, &res, parentIndex, &s);
+        if (s == -1)
+        {
+            printString("File doesn't exist.");
+            *result = -1;
+            return;
+        }
+
+        deleteDirectoryByIndex(res, result);
+    }
+}
+
+void deleteDirectoryByIndex(char index, int *success)
+{
+    char file[SECTOR_SIZE];
+    char dir[SECTOR_SIZE];
+    char map[SECTOR_SIZE];
+    char sector[SECTOR_SIZE];
+    char i, j;
+
+    readSector(dir, DIR_SECTOR);
+
+    if (dir[index * DIR_ENTRY_LENGTH + 1] == 0)
+    {
+        *success = 0;
+        return;
+    }
+
+    // hapus nama directory di index
+    dir[index * DIR_ENTRY_LENGTH + 1] = 0;
+
+    // hapus semua file yang mempunyai parent index
+    for (i = 0; i < MAX_FILES; i++)
+        if (file[i * DIR_ENTRY_LENGTH] == index)
+            deleteFileByIndex(i, success);
+
+    // hapus semua directory yang mempunyai parent index
+    for (i = 0; i < MAX_FILES; i++)
+        if (dir[i * DIR_ENTRY_LENGTH] == index)
+            deleteDirectoryByIndex(i, success);
+
+    readSector(map, MAP_SECTOR);
+    readSector(sector, SECTOR_SECTOR);
+    readSector(file, FILE_SECTOR);
+
+    writeSector(file, FILE_SECTOR);
+    writeSector(map, MAP_SECTOR);
+    writeSector(dir, DIR_SECTOR);
+
+    *success = 0;
+}
+
+void putArgs(char curdir, char argc, char **argv)
+{
+    char args[SECTOR_SIZE];
+    int i, j, p;
+    clear(args, SECTOR_SIZE);
+
+    args[0] = curdir;
+    args[1] = argc;
+    i = 0;
+    j = 0;
+    for (p = 1; p < ARGS_SECTOR && i < argc; ++p)
+    {
+        args[p] = argv[i][j];
+        if (argv[i][j] == 0)
+        {
+            ++i;
+            j = 0;
+        }
+        else
+        {
+            ++j;
+        }
+    }
+
+    writeSector(args, ARGS_SECTOR);
+}
+
+void getCurdir(char *curdir)
+{
+    char args[SECTOR_SIZE];
+    readSector(args, ARGS_SECTOR);
+    *curdir = args[0];
+}
+
+void getArgc(char *argc)
+{
+    char args[SECTOR_SIZE];
+    readSector(args, ARGS_SECTOR);
+    *argc = args[1];
+}
+
+void getArgv(char index, char *argv)
+{
+    char args[SECTOR_SIZE];
+    int i, j, p;
+    readSector(args, ARGS_SECTOR);
+
+    i = 0;
+    j = 0;
+    for (p = 1; p < ARGS_SECTOR; ++p)
+    {
+        if (i == index)
+        {
+            argv[j] = args[p];
+            ++j;
+        }
+        if (args[p] == 0)
+        {
+            if (i == index)
+                break;
+            else
+                ++i;
+        }
+    }
+
+    writeSector(args, ARGS_SECTOR);
+}
