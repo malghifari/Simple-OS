@@ -38,7 +38,7 @@ int main()
                 }else if (result == NOT_FOUND){
                     println("Directory Not Found");
                 }else if (result == ALREADY_EXIST){
-                    println("Alrseady Exist");
+                    println("Already Exist");
                 }
             }
         }else{

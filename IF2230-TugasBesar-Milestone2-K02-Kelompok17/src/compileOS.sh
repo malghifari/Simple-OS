@@ -29,6 +29,10 @@ bcc -ansi -c mkdir.o mkdir.c
 ld86 -o mkdir -d mkdir.o lib_asm.o helper.o
 ./loadFile mkdir
 
+bcc -ansi -c rm.o rm.c
+ld86 -o rm -d rm.o lib_asm.o helper.o
+./loadFile rm
+
 bcc -ansi -c touch.o touch.c
 ld86 -o touch -d touch.o lib_asm.o helper.o
 ./loadFile touch

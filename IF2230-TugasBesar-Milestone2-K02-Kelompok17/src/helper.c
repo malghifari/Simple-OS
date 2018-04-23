@@ -30,6 +30,10 @@ void writeFile(char *buffer, char *filename, int *sectors, char parentIndex)
     interrupt(0x21, parentIndex << 8 | 0x5, buffer, filename, sectors);
 }
 
+void deleteFile(char *path, int *result, char parentIndex){
+    interrupt(0x21, parentIndex << 8 | 0x9, path, result, 0);
+}
+
 void executeProgram(char *filename, int segment, int *success, char p)
 {
     interrupt(0x21, p << 8 | 0x6, filename, segment, success);
