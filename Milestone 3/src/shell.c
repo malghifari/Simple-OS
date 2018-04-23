@@ -7,6 +7,7 @@ int main()
     char argv[8][20];
     char *x[8];
     getCurdir(&curdir);
+    enableInterrupts();
     while (1){
         char input[100];
         char command[20];

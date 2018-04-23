@@ -8,6 +8,7 @@ int main()
     char argc;
     int i, j;
 
+    enableInterrupts();
     getArgc(&argc);
     if (argc != 0){
         println("too much args");

@@ -12,6 +12,7 @@
 #define TRUE 1
 #define FALSE 0
 #define NOT_FOUND -1
+#define INSUFFICIENT_SEGMENTS -1
 #define ARGS_SECTOR 512
 #define EMPTY 0x00
 #define USED 0xFF
@@ -44,7 +45,8 @@ void makeDirectory(char *path, int *result, char parentIndex);
 void findDirectory(char *name, char *result, char parentIndex, int *attempt);
 void deleteDirectory(char *path, int *result, char parentIndex);
 void deleteDirectoryByIndex(char index, int *attempt);
-void executeProgram(char *filename, int segment, int *attempt, char p);
+// void executeProgram(char *filename, int segment, int *attempt, char p);
+void executeProgram (char *path, int *result, char parentIndex);
 void terminateProgram(int *result);
 void getArgc(char *argc);
 void putArgs(char curdir, char argc, char **argv);
@@ -72,7 +74,7 @@ int main()
     makeTimerInterrupt();
     printLogo();
     putArgs(0xFF, 0, 0);
-    executeProgram("shell", 0x2000, &attempt, 0xFF);
+    executeProgram("shell", &attempt, 0xFF);
     while (1);
 }
 
@@ -107,7 +109,7 @@ void handleInterrupt21(int AX, int BX, int CX, int DX)
         writeFile(BX, CX, DX, AH);
         break;
     case 0x6:
-        executeProgram(BX, CX, DX, AH);
+        executeProgram(BX, CX, AH);
         break;
     case 0x7:
         terminateProgram(BX);
@@ -212,147 +214,57 @@ void writeSector(char *buffer, int sector)
     interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
-// void readFile(char *buffer, char *filename, int *attempt, char parentIndex)
-// {
-//     char dir[SECTOR_SIZE];
-//     char files[SECTOR_SIZE];
-//     char sector[SECTOR_SECTOR];
-//     char exist = FALSE;
-//     int temp = -1;
-//     int index_directory, index_file, i, l, count;
-//     char name[MAX_FILENAME];
-//     char c;
-//     char equal;
+void readFile(char *buffer, char *filename, int *attempt, char parentIndex)
+{
+    char dir[SECTOR_SIZE];
+    char files[SECTOR_SIZE];
+    char sector[SECTOR_SECTOR];
+    char exist = FALSE;
+    int temp = -1;
+    int index_directory, index_file, i, l, count;
+    char name[MAX_FILENAME];
+    char c;
+    char equal;
 
-//     //calculate the length of filename
-//     i = 0; l = 0; //length of filename = l
-//     while (filename[i] != 0){
-//         i++; l++;
-//     }
-//     // l=0, string empty
-//     if (l == 0){
-//         *attempt = -1;
-//         return;
-//     }
-//     // Find the first '/'
-//     i = 0;
-//     while ((filename[i] != 0) && (filename[i] != '/')){
-//         name[i] = filename[i];
-//         i++;
-//     }
-//     name[i] = 0;
-//     // Recursive, Find directory in dirsector
-//     if (filename[i] == '/'){
-//         findDirectory(name, &c, parentIndex, &temp);
-//         if (temp == -1){
-//             *attempt = -1;
-//             return;
-//         }
-//         readFile(buffer, filename + i + 1, attempt, c);
-//     }else{
-//         readSector(sector, SECTOR_SECTOR);
-//         findFile(name, &c, parentIndex, &temp);
-//         if (temp == -1){
-//             *attempt = NOT_FOUND;
-//             return;
-//         }
-//         // load data sector to buffer
-//         for (i = 0; (i < 0x10) && (sector[c * DIR_ENTRY_LENGTH + i] != 0); i++){
-//             readSector(buffer + i * SECTOR_SIZE,
-//                        sector[c * DIR_ENTRY_LENGTH + i]);
-//         }
-//         *attempt = 0;
-//     }
-// }
-
-void readFile(char* buffer, char* path, int *result, char parentIndex){
-	char dirs[SECTOR_SIZE];
-	char files[SECTOR_SIZE];
-	char sectors[SECTOR_SIZE];
-	char splitted_path[15];
-	int path_idx = 0;
-	int splitted_path_idx = 0;
-	int i, j, found;
-	// int found = FALSE;
-	// int bener;
-	// int idx, i, j;
-	readSector(dirs, DIR_SECTOR);
-	readSector(files, FILE_SECTOR);
-	readSector(sectors, SECTOR_SECTOR);
-	while(TRUE){
-		if(path[path_idx] == '/' && path_idx == 0){
-			path_idx++;
-		}
-		// when splitted_path is a directory
-		else if(path[path_idx] == '/'){
-			splitted_path[splitted_path_idx] = '\0';
-			splitted_path_idx = 0;
-			for(i=0; i<SECTOR_SIZE; i+=16){
-				found = TRUE;
-				if(dirs[i] == parentIndex){
-					j = 0;
-					while(splitted_path[j] != '\0' && found){
-						if(splitted_path[j] != dirs[j+i+1]){
-							found = FALSE;
-						}
-						else{
-							j++;
-						}
-					}
-				}
-				else{
-					found = FALSE;
-				}
-				if(found == TRUE){
-					parentIndex = dirs[i];
-					break;
-				}
-			}
-			if(found == FALSE){
-				*result = -1;
-				return;
-			}
-		}
-
-		//when splitted_path is a files
-		else if(path[path_idx] == '\0'){
-			splitted_path[splitted_path_idx] = '\0';
-			splitted_path_idx = 0;
-			for(i=0; i<SECTOR_SIZE; i+=16){
-				found = TRUE;
-				if(files[i] == parentIndex){
-					j = 0;
-					while(splitted_path[j] != '\0' && found){
-						if(splitted_path[j] != files[j+i+1]){
-							found = FALSE;
-						}
-						else{
-							j++;
-						}
-					}
-				}
-				else{
-					found = FALSE;
-				}
-				if(found == TRUE){
-					for (i = 0; (i < 0x10) && (sectors[parentIndex * DIR_ENTRY_LENGTH + i] != 0); i++){
-                        readSector(buffer + i * SECTOR_SIZE, sectors[parentIndex * DIR_ENTRY_LENGTH + i]);
-                    }
-					*result = 0;
-					return;
-				}
-			}
-			if(found == FALSE){
-				*result = -1;
-				return;
-			}
-		}
-		else{
-			splitted_path[splitted_path_idx] = path[path_idx];
-			splitted_path_idx++;
-			path_idx++;
-		} 
-	}
+    //calculate the length of filename
+    i = 0; l = 0; //length of filename = l
+    while (filename[i] != 0){
+        i++; l++;
+    }
+    // l=0, string empty
+    if (l == 0){
+        *attempt = -1;
+        return;
+    }
+    // Find the first '/'
+    i = 0;
+    while ((filename[i] != 0) && (filename[i] != '/')){
+        name[i] = filename[i];
+        i++;
+    }
+    name[i] = 0;
+    // Recursive, Find directory in dirsector
+    if (filename[i] == '/'){
+        findDirectory(name, &c, parentIndex, &temp);
+        if (temp == -1){
+            *attempt = -1;
+            return;
+        }
+        readFile(buffer, filename + i + 1, attempt, c);
+    }else{
+        readSector(sector, SECTOR_SECTOR);
+        findFile(name, &c, parentIndex, &temp);
+        if (temp == -1){
+            *attempt = NOT_FOUND;
+            return;
+        }
+        // load data sector to buffer
+        for (i = 0; (i < 0x10) && (sector[c * DIR_ENTRY_LENGTH + i] != 0); i++){
+            readSector(buffer + i * SECTOR_SIZE,
+                       sector[c * DIR_ENTRY_LENGTH + i]);
+        }
+        *attempt = c; // hasil perubahan dari sebelumnya
+    }
 }
 
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex)
@@ -759,37 +671,56 @@ void deleteDirectoryByIndex(char index, int *attempt)
     *attempt = 0;
 }
 
-void executeProgram(char *filename, int segment, int *attempt, char parentIndex)
-{
-    char buffer[16 * SECTOR_SIZE];
-    clear(buffer, 16 * SECTOR_SIZE);
-    readFile(buffer, filename, attempt, parentIndex);
-    // searching
-    if (*attempt == 0){
-        int i;
-        for (i = 0; i < 16 * SECTOR_SIZE; ++i)
-            putInMemory(segment, i, buffer[i]);
-        launchProgram(segment);
-        *attempt = TRUE;
-    }else{
-        *attempt = FALSE;
+void executeProgram (char *path, int *result, char parentIndex){  
+  struct PCB* pcb;
+  int segment;
+  int i, fileIndex;
+  char buffer[MAX_SECTORS * SECTOR_SIZE];
+  readFile(buffer, path, result, parentIndex);
+ 
+  if (*result != NOT_FOUND) {
+    setKernelDataSegment();
+    segment = getFreeMemorySegment();
+    restoreDataSegment();
+    
+    fileIndex = *result; 
+    if (segment != NO_FREE_SEGMENTS) {
+      setKernelDataSegment();
+      pcb = getFreePCB();
+      pcb->index = fileIndex;
+      pcb->state = STARTING;
+      pcb->segment = segment;
+      pcb->stackPointer = 0xFF00;
+      pcb->parentSegment = running->segment;
+      addToReady(pcb);
+      restoreDataSegment();
+      for (i = 0; i < SECTOR_SIZE * MAX_SECTORS; i++) {
+        putInMemory(segment, i, buffer[i]);
+      }
+      initializeProgram(segment);
+      sleep();
     }
+    else {
+      *result = INSUFFICIENT_SEGMENTS;
+    }
+  }
 }
 
-void terminateProgram(int *result)
-{
-    char shell[6];
-    char curdir;
-    shell[0] = 's';
-    shell[1] = 'h';
-    shell[2] = 'e';
-    shell[3] = 'l';
-    shell[4] = 'l';
-    shell[5] = 0;
-    getCurdir(&curdir);
-    putArgs(curdir, 0, 0);
-    executeProgram(shell, 0x2000, result, 0xFF);
+
+void terminateProgram (int *result) {
+  int parentSegment;
+   
+  setKernelDataSegment();
+  parentSegment = running->parentSegment;
+  releaseMemorySegment(running->segment);
+  releasePCB(running);
+  restoreDataSegment();
+  if (parentSegment != NO_PARENT) {
+    resumeProcess(parentSegment, result);
+  }
+  yieldControl();
 }
+
 
 void getArgc(char *argc)
 {

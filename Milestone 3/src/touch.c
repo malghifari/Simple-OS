@@ -6,7 +6,7 @@ int main()
     char pwd;
     char input[20];
     int i, j, result;
-
+    enableInterrupts();
     getArgc(&argc);
     if (argc != 1)
     {

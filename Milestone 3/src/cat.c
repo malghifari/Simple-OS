@@ -5,6 +5,7 @@ int main()
     char curdir;
     char argc;
     char *arg;
+    enableInterrupts();
     getArgc(&argc);
     getCurdir(&curdir);
     if (argc == 1){
