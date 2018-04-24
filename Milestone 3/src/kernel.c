@@ -58,6 +58,7 @@ void printChar(char c);
 void printCharval(char c);
 int strlen(char *string);
 void printLogo();
+// new changes
 void handleTimerInterrupt(int segment, int stackPointer);
 void yieldControl();
 void sleep();
@@ -915,7 +916,6 @@ void resumeProcess (int segment, int *result) {
     res = NOT_FOUND;
   }
   restoreDataSegment();
-   
   *result = res;
 }
 
@@ -934,7 +934,6 @@ void killProcess (int segment, int *result) {
     res = NOT_FOUND;
   }
   restoreDataSegment();
-   
   *result = res;
 }
 

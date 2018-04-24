@@ -32,37 +32,37 @@
 00000000000i[     ]   SB16 support: yes
 00000000000i[     ]   USB support: yes
 00000000000i[     ]   VGA extension support: vbe cirrus
-00000000000i[MEM0 ] allocated memory at 0x7f90cbc85010. after alignment, vector=0x7f90cbc86000
+00000000000i[MEM0 ] allocated memory at 0x7fbf465e4010. after alignment, vector=0x7fbf465e5000
 00000000000i[MEM0 ] 32,00MB
 00000000000i[MEM0 ] mem block size = 0x00100000, blocks=32
 00000000000i[MEM0 ] rom at 0xfffe0000/131072 ('/usr/share/bochs/BIOS-bochs-latest')
-00000000000i[     ] lt_dlhandle is 0x409e650
+00000000000i[     ] lt_dlhandle is 0x38c1670
 00000000000i[PLGIN] loaded plugin libbx_hdimage.so
-00000000000i[     ] lt_dlhandle is 0x409efe0
+00000000000i[     ] lt_dlhandle is 0x38c2000
 00000000000i[PLGIN] loaded plugin libbx_pci.so
-00000000000i[     ] lt_dlhandle is 0x409fb60
+00000000000i[     ] lt_dlhandle is 0x38c2b80
 00000000000i[PLGIN] loaded plugin libbx_pci2isa.so
-00000000000i[     ] lt_dlhandle is 0x40a0570
+00000000000i[     ] lt_dlhandle is 0x38c3590
 00000000000i[PLGIN] loaded plugin libbx_acpi.so
-00000000000i[     ] lt_dlhandle is 0x40a0f70
+00000000000i[     ] lt_dlhandle is 0x38c3f90
 00000000000i[PLGIN] loaded plugin libbx_cmos.so
-00000000000i[     ] lt_dlhandle is 0x40a18b0
+00000000000i[     ] lt_dlhandle is 0x38c48d0
 00000000000i[PLGIN] loaded plugin libbx_dma.so
-00000000000i[     ] lt_dlhandle is 0x40a2340
+00000000000i[     ] lt_dlhandle is 0x38c5360
 00000000000i[PLGIN] loaded plugin libbx_pic.so
-00000000000i[     ] lt_dlhandle is 0x40a2be0
+00000000000i[     ] lt_dlhandle is 0x38c5c00
 00000000000i[PLGIN] loaded plugin libbx_pit.so
-00000000000i[     ] lt_dlhandle is 0x40a3610
+00000000000i[     ] lt_dlhandle is 0x38c6630
 00000000000i[PLGIN] loaded plugin libbx_floppy.so
-00000000000i[     ] lt_dlhandle is 0x40a4200
+00000000000i[     ] lt_dlhandle is 0x38c7220
 00000000000i[PLGIN] loaded plugin libbx_vga.so
-00000000000i[     ] lt_dlhandle is 0x40a4990
+00000000000i[     ] lt_dlhandle is 0x38c79b0
 00000000000i[PLGIN] loaded plugin libbx_ioapic.so
-00000000000i[     ] lt_dlhandle is 0x40a53d0
+00000000000i[     ] lt_dlhandle is 0x38c83f0
 00000000000i[PLGIN] loaded plugin libbx_keyboard.so
-00000000000i[     ] lt_dlhandle is 0x40a5c70
+00000000000i[     ] lt_dlhandle is 0x38c8c90
 00000000000i[PLGIN] loaded plugin libbx_harddrv.so
-00000000000i[     ] lt_dlhandle is 0x40b7d60
+00000000000i[     ] lt_dlhandle is 0x38dad80
 00000000000i[PLGIN] loaded plugin libbx_pci_ide.so
 00000000000i[PLGIN] init_dev of 'pci' plugin device by virtual method
 00000000000i[PCI  ] 440FX Host bridge present at device 0, function 0
@@ -70,7 +70,7 @@
 00000000000i[PCI  ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
 00000000000i[PLGIN] init_dev of 'cmos' plugin device by virtual method
 00000000000i[CMOS ] Using local time for initial clock
-00000000000i[CMOS ] Setting initial clock to: Mon Apr 23 10:12:50 2018 (time0=1524453170)
+00000000000i[CMOS ] Setting initial clock to: Tue Apr 24 00:42:40 2018 (time0=1524505360)
 00000000000i[PLGIN] init_dev of 'dma' plugin device by virtual method
 00000000000i[DMA  ] channel 4 used by cascade
 00000000000i[PLGIN] init_dev of 'pic' plugin device by virtual method
@@ -216,24 +216,53 @@
 00032315167i[BIOS ] Booting from 0000:7c00
 00034672111i[CPU0 ] LOCK prefix unallowed (op1=0x53, modrm=0x00)
 00034672115i[CPU0 ] LOCK prefix unallowed (op1=0x53, modrm=0x00)
-00272740000p[XGUI ] >>PANIC<< POWER button turned off.
-00272740000i[CPU0 ] CPU is in real mode (active)
-00272740000i[CPU0 ] CS.mode = 16 bit
-00272740000i[CPU0 ] SS.mode = 16 bit
-00272740000i[CPU0 ] EFER   = 0x00000000
-00272740000i[CPU0 ] | EAX=00000006  EBX=00000060  ECX=0009ffd0  EDX=00000000
-00272740000i[CPU0 ] | ESP=0000dfc2  EBP=0000dfd8  ESI=000e0023  EDI=0000ffac
-00272740000i[CPU0 ] | IOPL=0 id vip vif ac vm rf nt of df if tf SF zf af pf cf
-00272740000i[CPU0 ] | SEG sltr(index|ti|rpl)     base    limit G D
-00272740000i[CPU0 ] |  CS:f000( 0004| 0|  0) 000f0000 0000ffff 0 0
-00272740000i[CPU0 ] |  DS:1000( 0005| 0|  0) 00010000 0000ffff 0 0
-00272740000i[CPU0 ] |  SS:1000( 0005| 0|  0) 00010000 0000ffff 0 0
-00272740000i[CPU0 ] |  ES:1000( 0005| 0|  0) 00010000 0000ffff 0 0
-00272740000i[CPU0 ] |  FS:0000( 0005| 0|  0) 00000000 0000ffff 0 0
-00272740000i[CPU0 ] |  GS:0000( 0005| 0|  0) 00000000 0000ffff 0 0
-00272740000i[CPU0 ] | EIP=0000ff53 (00000003)
-00272740000i[CPU0 ] | CR0=0x60000010 CR2=0x00000000
-00272740000i[CPU0 ] | CR3=0x00000000 CR4=0x00000000
-00272740000i[CMOS ] Last time is 1524453197 (Mon Apr 23 10:13:17 2018)
-00272740000i[XGUI ] Exit
-00272740000i[CTRL ] quit_sim called with exit code 1
+00072630000i[KBD  ] internal keyboard buffer full, ignoring scancode.(30)
+00073110000i[KBD  ] internal keyboard buffer full, ignoring scancode.(b9)
+00073300000i[KBD  ] internal keyboard buffer full, ignoring scancode.(26)
+00073380000i[KBD  ] internal keyboard buffer full, ignoring scancode.(25)
+00073380000i[KBD  ] internal keyboard buffer full, ignoring scancode.(b0)
+00073380000i[KBD  ] internal keyboard buffer full, ignoring scancode.(1f)
+00073530000i[KBD  ] internal keyboard buffer full, ignoring scancode.(a6)
+00073850000i[KBD  ] internal keyboard buffer full, ignoring scancode.(31)
+00073920000i[KBD  ] internal keyboard buffer full, ignoring scancode.(20)
+00074200000i[KBD  ] internal keyboard buffer full, ignoring scancode.(9f)
+00074660000i[KBD  ] internal keyboard buffer full, ignoring scancode.(a5)
+00074930000i[KBD  ] internal keyboard buffer full, ignoring scancode.(22)
+00075070000i[KBD  ] internal keyboard buffer full, ignoring scancode.(a0)
+00075330000i[KBD  ] internal keyboard buffer full, ignoring scancode.(28)
+00075630000i[KBD  ] internal keyboard buffer full, ignoring scancode.(b1)
+00075920000i[KBD  ] internal keyboard buffer full, ignoring scancode.(11)
+00076040000i[KBD  ] internal keyboard buffer full, ignoring scancode.(a2)
+00076360000i[KBD  ] internal keyboard buffer full, ignoring scancode.(19)
+00076420000i[KBD  ] internal keyboard buffer full, ignoring scancode.(12)
+00076610000i[KBD  ] internal keyboard buffer full, ignoring scancode.(a8)
+00076760000i[KBD  ] internal keyboard buffer full, ignoring scancode.(99)
+00077100000i[KBD  ] internal keyboard buffer full, ignoring scancode.(31)
+00077540000i[KBD  ] internal keyboard buffer full, ignoring scancode.(14)
+00077920000i[KBD  ] internal keyboard buffer full, ignoring scancode.(91)
+00078380000i[KBD  ] internal keyboard buffer full, ignoring scancode.(92)
+00078450000i[KBD  ] internal keyboard buffer full, ignoring scancode.(b1)
+00078650000i[KBD  ] internal keyboard buffer full, ignoring scancode.(94)
+00079520000i[KBD  ] internal keyboard buffer full, ignoring scancode.(1c)
+00080640000i[KBD  ] internal keyboard buffer full, ignoring scancode.(9c)
+00093970000p[XGUI ] >>PANIC<< POWER button turned off.
+00093970000i[CPU0 ] CPU is in real mode (active)
+00093970000i[CPU0 ] CS.mode = 16 bit
+00093970000i[CPU0 ] SS.mode = 16 bit
+00093970000i[CPU0 ] EFER   = 0x00000000
+00093970000i[CPU0 ] | EAX=00000006  EBX=00000060  ECX=0009ffd0  EDX=00000000
+00093970000i[CPU0 ] | ESP=0000dfc2  EBP=0000dfd8  ESI=000e0023  EDI=0000ffac
+00093970000i[CPU0 ] | IOPL=0 id vip vif ac vm rf nt of df if tf SF zf af pf cf
+00093970000i[CPU0 ] | SEG sltr(index|ti|rpl)     base    limit G D
+00093970000i[CPU0 ] |  CS:f000( 0004| 0|  0) 000f0000 0000ffff 0 0
+00093970000i[CPU0 ] |  DS:1000( 0005| 0|  0) 00010000 0000ffff 0 0
+00093970000i[CPU0 ] |  SS:1000( 0005| 0|  0) 00010000 0000ffff 0 0
+00093970000i[CPU0 ] |  ES:1000( 0005| 0|  0) 00010000 0000ffff 0 0
+00093970000i[CPU0 ] |  FS:0000( 0005| 0|  0) 00000000 0000ffff 0 0
+00093970000i[CPU0 ] |  GS:0000( 0005| 0|  0) 00000000 0000ffff 0 0
+00093970000i[CPU0 ] | EIP=0000ff53 (00000003)
+00093970000i[CPU0 ] | CR0=0x60000010 CR2=0x00000000
+00093970000i[CPU0 ] | CR3=0x00000000 CR4=0x00000000
+00093970000i[CMOS ] Last time is 1524505369 (Tue Apr 24 00:42:49 2018)
+00093970000i[XGUI ] Exit
+00093970000i[CTRL ] quit_sim called with exit code 1
