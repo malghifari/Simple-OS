@@ -25,6 +25,10 @@ bcc -ansi -c ls.o ls.c
 ld86 -o ls -d ls.o lib_asm.o helper.o
 ./loadFile ls
 
+bcc -ansi -c echo.o echo.c
+ld86 -o echo -d echo.o lib_asm.o helper.o
+./loadFile echo
+
 bcc -ansi -c mkdir.o mkdir.c
 ld86 -o mkdir -d mkdir.o lib_asm.o helper.o
 ./loadFile mkdir
