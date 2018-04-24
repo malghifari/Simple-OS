@@ -1,0 +1,53 @@
+Background character color
+
+0x0
+    Blank 
+0x1
+    Blue 
+0x2
+    Green 
+0x3
+    Cyan 
+0x4
+    Red 
+0x5
+    Magenta 
+0x6
+    Brown (3270), Yellow (5250) 
+0x7
+    White 
+
+Foreground character color
+
+0x0
+    Blank 
+0x1
+    Blue 
+0x2
+    Green 
+0x3
+    Cyan 
+0x4
+    Red 
+0x5
+    Magenta 
+0x6
+    Brown (3270), Yellow (5250) 
+0x7
+    White (normal intensity) 
+0x8
+    Gray 
+0x9
+    Light blue 
+0xA
+    Light green 
+0xB
+    Light cyan 
+0xC
+    Light red 
+0xD
+    Light magenta 
+0xE
+    Yellow 
+0xF
+    White (high intensity) 
